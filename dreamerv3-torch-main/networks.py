@@ -180,7 +180,12 @@ class RSSM(nn.Module):
             )
         # overwrite the prev_state only where is_first=True
         elif torch.sum(is_first) > 0:
-            is_first = is_first[:, None]
+            #print(is_first.shape)
+            if is_first.dim()==1:
+                is_first = is_first[:, None]
+            #print(is_first.shape)
+            #print(self._num_actions)
+            #print(prev_action.shape)
             prev_action *= 1.0 - is_first
             init_state = self.initial(len(is_first))
             for key, val in prev_state.items():
@@ -384,7 +389,7 @@ class MultiDecoder(nn.Module):
         outscale,
     ):
         super(MultiDecoder, self).__init__()
-        excluded = ("is_first", "is_last", "is_terminal")
+        excluded = ("is_first", "is_last", "is_terminal","target_image_embedding")
         shapes = {k: v for k, v in shapes.items() if k not in excluded}
         self.cnn_shapes = {
             k: v for k, v in shapes.items() if len(v) == 3 and re.match(cnn_keys, k)
@@ -487,7 +492,7 @@ class ConvEncoder(nn.Module):
             out_dim *= 2
             #made a difference here due to dimension issue from flooring
             h, w =-( -h // 2), -(-w // 2)
-        self.outdim = out_dim // 2 * h * w
+        self.outdim = -(-out_dim // 2) * h * w
         self.layers = nn.Sequential(*layers)
         self.layers.apply(tools.weight_init)
 
@@ -521,15 +526,15 @@ class ConvDecoder(nn.Module):
         act = getattr(torch.nn, act)
         self._shape = shape
         self._cnn_sigmoid = cnn_sigmoid
-        layer_num = int(np.log2(shape[1]) - np.log2(minres))
+        layer_num = int(np.log2(shape[1])) - int(np.log2(minres))
         self._minres = minres
         out_ch = minres**2 * depth * 2 ** (layer_num - 1)
         self._embed_size = out_ch
 
         self._linear_layer = nn.Linear(feat_size, out_ch)
         self._linear_layer.apply(tools.uniform_weight_init(outscale))
-        in_dim = out_ch // (minres**2)
-        out_dim = in_dim // 2
+        in_dim = -(-out_ch // (minres**2))
+        out_dim = -(-in_dim // 2)
 
         layers = []
         h, w = minres, minres
@@ -560,8 +565,12 @@ class ConvDecoder(nn.Module):
                 layers.append(ImgChLayerNorm(out_dim))
             if act:
                 layers.append(act())
+            #print(h)
+            #print(w)
+            #print(i)
+            #print("LAYER")
             in_dim = out_dim
-            out_dim //= 2
+            out_dim =-(-out_dim// 2)
             h, w = h * 2, w * 2
         [m.apply(tools.weight_init) for m in layers[:-1]]
         layers[-1].apply(tools.uniform_weight_init(outscale))
@@ -574,6 +583,7 @@ class ConvDecoder(nn.Module):
         return pad, outpad
 
     def forward(self, features, dtype=None):
+        #print(features.shape)
         x = self._linear_layer(features)
         # (batch, time, -1) -> (batch * time, h, w, ch)
         x = x.reshape(
@@ -581,7 +591,9 @@ class ConvDecoder(nn.Module):
         )
         # (batch, time, -1) -> (batch * time, ch, h, w)
         x = x.permute(0, 3, 1, 2)
+        #print(x.shape)
         x = self.layers(x)
+        #print(x.shape)
         # (batch, time, -1) -> (batch, time, ch, h, w)
         mean = x.reshape(features.shape[:-1] + self._shape)
         # (batch, time, ch, h, w) -> (batch, time, h, w, ch)

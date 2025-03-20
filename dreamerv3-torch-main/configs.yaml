@@ -112,13 +112,14 @@ dmc_vision:
   decoder: {mlp_keys: '$^', cnn_keys: 'image'}
 
 metaworld:
+  batch_size: 2
   steps: 1e4
   action_repeat: 1
   envs: 1
   train_ratio: 512
   video_pred_log: false
-  encoder: {mlp_keys: '$^', cnn_keys: 'image'}
-  decoder: {mlp_keys: '$^', cnn_keys: 'image'}
+  encoder: {mlp_keys: '$^', cnn_keys: 'image' , minres: 15}
+  decoder: {mlp_keys: '$^', cnn_keys: 'image', minres: 15}
   imag_gradient: 'reinforce'
   reward_head:
     {layers: 2, dist: 'none', loss_scale: 1.0, outscale: 1.0}
