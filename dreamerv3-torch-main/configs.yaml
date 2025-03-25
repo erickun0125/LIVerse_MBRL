@@ -112,7 +112,7 @@ dmc_vision:
   decoder: {mlp_keys: '$^', cnn_keys: 'image'}
 
 metaworld:
-  batch_size: 2
+  batch_size: 4
   steps: 1e4
   action_repeat: 1
   envs: 1

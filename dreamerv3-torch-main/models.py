@@ -141,11 +141,15 @@ class WorldModel(nn.Module):
                         # Assume data contains the target image embedding under "target_image_embedding"
                         # which is produced by passing the rendered image through LIV's image encoder.
                         target_image = data["target_image_embedding"]
+                        if target_image.dim()==4:
+                            target_image = target_image.squeeze(2)
                         # Compute cosine similarity between the predicted embedding and the target image embedding.
                         cos_sim_loss = 1.0 - torch.nn.functional.cosine_similarity(pred, target_image, dim=-1)
                         # Optionally, average over batch and time dimensions:
                         losses[name] = cos_sim_loss
                     else:
+                        #print(data[name].shape)
+                        #print(name)
                         loss = -pred.log_prob(data[name])
                         losses[name] = loss
                 scaled = {

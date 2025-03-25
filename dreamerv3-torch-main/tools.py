@@ -388,6 +388,11 @@ def sample_episodes(episodes, length, seed=0):
                 # 'is_first' comes after 'is_last'
                 index = 0
                 possible = length - size
+                """print(possible)
+                for k, v in episode.items():
+                    if "log_" not in k:
+                        print(ret[k].shape)
+                        print(v[index : min(index + possible, total)].shape)"""
                 ret = {
                     k: np.append(
                         ret[k], v[index : min(index + possible, total)].copy(), axis=0
