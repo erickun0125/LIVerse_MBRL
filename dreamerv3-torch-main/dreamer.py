@@ -53,7 +53,7 @@ class Dreamer(nn.Module):
             self._wm = torch.compile(self._wm)
             self._task_behavior = torch.compile(self._task_behavior)
         reward = lambda f, s, a: torch.nn.functional.cosine_similarity(
-    self._wm.heads["reward"](f).mean(),self.target_text_embedding, dim=-1
+    self._wm.heads["reward"](f),self.target_text_embedding, dim=-1
 )
         self._expl_behavior = dict(
             greedy=lambda: self._task_behavior,
@@ -128,7 +128,7 @@ class Dreamer(nn.Module):
         metrics.update(mets)
         start = post
         reward = lambda f, s, a: torch.nn.functional.cosine_similarity(
-    self._wm.heads["reward"](f).mode(), self.target_text_embedding, dim=-1
+    self._wm.heads["reward"](f), self.target_text_embedding, dim=-1
 )
         metrics.update(self._task_behavior._train(start, reward)[-1])
         if self._config.expl_behavior != "greedy":

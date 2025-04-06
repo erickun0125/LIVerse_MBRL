@@ -203,7 +203,7 @@ def simulate(
             # Pass these into the dynamics obs_step along with the encoder output and the "is_first" flag.
             latent, _ = wm.dynamics.obs_step(latent_prev, action_prev, encoder_out, torch.tensor(list(obs)[0]["is_first"]))
             f = wm.dynamics.get_feat(latent)  # Now f should be in the expected latent space.
-            predicted_embedding = wm.heads["reward"](f).mean()
+            predicted_embedding = wm.heads["reward"](f)
             reward = torch.nn.functional.cosine_similarity(predicted_embedding, text_embedding, dim=-1)
             reward = list(reward.detach().cpu().numpy())
             reward=np.atleast_1d(reward)
@@ -383,25 +383,44 @@ def sample_episodes(episodes, length, seed=0):
                     if "log_" not in k
                 }
                 if "is_first" in ret:
-                    ret["is_first"][0] = True
+                    ret["is_first"][0] = [True]
             else:
                 # 'is_first' comes after 'is_last'
                 index = 0
                 possible = length - size
-                """print(possible)
-                for k, v in episode.items():
-                    if "log_" not in k:
-                        print(ret[k].shape)
-                        print(v[index : min(index + possible, total)].shape)"""
-                ret = {
-                    k: np.append(
-                        ret[k], v[index : min(index + possible, total)].copy(), axis=0
-                    )
-                    for k, v in episode.items()
-                    if "log_" not in k
-                }
+                """ret = {
+    k: np.append(
+        ret[k] if isinstance(ret[k], np.ndarray) else np.array(ret[k]),
+        v[index : min(index + possible, total)].copy(),
+        axis=0
+    )
+    for k, v in episode.items()
+    if "log_" not in k
+
+                }"""
+                
+                try:
+                    ret = {
+                        k: np.append(
+                            ret[k], v[index : min(index + possible, total)].copy(), axis=0
+                        )
+                        for k, v in episode.items()
+                        if "log_" not in k
+                    }
+                except:
+                    print(possible)
+                    for k, v in episode.items():
+                        if "log_" not in k:
+                            print(v[index : min(index + possible, total)].shape)
+                            print(len(ret[k]))
+                            for i, item in enumerate(ret[k]):
+                                print(f"ret[{k}][{i}] shape: {np.array(item).shape}")
+                            input()
+                            print(ret[k])
+
+                    raise EOFError("WITHIN TOOLS SAMPLE EPISODES")
                 if "is_first" in ret:
-                    ret["is_first"][size] = True
+                    ret["is_first"][size] = [True]
             size = len(next(iter(ret.values())))
         yield ret
 
@@ -737,6 +756,8 @@ def lambda_return(reward, value, pcont, bootstrap, lambda_, axis):
     # Setting lambda=1 gives a discounted Monte Carlo return.
     # Setting lambda=0 gives a fixed 1-step return.
     # assert reward.shape.ndims == value.shape.ndims, (reward.shape, value.shape)
+    if len(reward.shape)+1==len(value.shape):
+        reward=reward.unsqueeze(-1)
     assert len(reward.shape) == len(value.shape), (reward.shape, value.shape)
     if isinstance(pcont, (int, float)):
         pcont = pcont * torch.ones_like(reward)
