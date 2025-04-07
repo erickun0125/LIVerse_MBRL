@@ -327,7 +327,7 @@ def main(config):
             print("Start evaluation.")
             eval_policy = functools.partial(agent, training=False)
             
-            """tools.simulate(
+            tools.simulate(
                 eval_policy,
                 eval_envs,
                 eval_eps,
@@ -340,7 +340,7 @@ def main(config):
             )
             if config.video_pred_log:
                 video_pred = agent._wm.video_pred(next(eval_dataset))
-                logger.video("eval_openl", to_np(video_pred))"""
+                logger.video("eval_openl", to_np(video_pred))
         print("Start training.")
         state = tools.simulate(
             agent,
