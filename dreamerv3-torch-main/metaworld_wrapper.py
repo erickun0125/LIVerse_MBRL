@@ -3,7 +3,6 @@ import numpy as np
 import metaworld
 from gym import spaces
 import random
-from liv import load_liv
 import torch
 import torchvision.transforms as T
 from PIL import Image
@@ -48,10 +47,10 @@ class MetaWorldEnvWrapper(gym.Env):
       obs = env.reset()
       next_obs, reward, done, info = env.step(action)
     """
-    def __init__(self, task_name, seed=None,mode="train"):
+    def __init__(self, task_name, liv,seed=None,mode="train"):
         super(MetaWorldEnvWrapper, self).__init__()
         self.task_name = task_name
-        self.liv = load_liv()
+        self.liv =liv
         self.liv.eval()
         self.transform = T.Compose([T.ToTensor()])
         if seed is not None:

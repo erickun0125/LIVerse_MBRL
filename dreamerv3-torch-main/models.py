@@ -150,6 +150,8 @@ class WorldModel(nn.Module):
                     else:
                         #print(data[name].shape)
                         #print(name)
+                        if data[name].dim()==4:
+                            data[name] = data[name].squeeze(2)
                         loss = -pred.log_prob(data[name])
                         losses[name] = loss
                 scaled = {

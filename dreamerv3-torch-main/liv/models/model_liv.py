@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/snowhan1021/dreamerv3-torch-main/liv/models/')
+sys.path.append('/home/kyungseo/project_eric/VLMPROJECT/dreamerv3-torch-main/liv/models/')
 import clip
 from clip.model import CLIP
 import numpy as np

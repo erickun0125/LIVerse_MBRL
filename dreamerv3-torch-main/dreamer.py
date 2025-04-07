@@ -151,7 +151,7 @@ def make_dataset(episodes, config):
     return dataset
 
 
-def make_env(config, mode, id):
+def make_env(config, mode, id,liv=None):
     suite, task = config.task.split("_", 1)
     if suite == "dmc":
         import envs.dmc as dmc
@@ -162,7 +162,7 @@ def make_env(config, mode, id):
         env = wrappers.NormalizeActions(env)
     elif suite =="ML1":
         from metaworld_wrapper import MetaWorldEnvWrapper
-        env = MetaWorldEnvWrapper(task_name=task, seed=config.seed + id,mode=mode)
+        env = MetaWorldEnvWrapper(task_name=task, liv=liv,seed=config.seed + id,mode=mode)
         #need to make a wrapper that edits the return observation
         #into tuple format that recieves 
     elif suite == "atari":
@@ -253,7 +253,7 @@ def main(config):
     else:
         directory = config.evaldir
     eval_eps = tools.load_episodes(directory, limit=1)
-    make = lambda mode, id: make_env(config, mode, id)
+    make = lambda mode, id: make_env(config, mode, id,liv)
     train_envs = [make("train", i) for i in range(config.envs)]
     eval_envs = [make("eval", i) for i in range(config.envs)]
     if config.parallel:
@@ -327,7 +327,7 @@ def main(config):
             print("Start evaluation.")
             eval_policy = functools.partial(agent, training=False)
             
-            tools.simulate(
+            """tools.simulate(
                 eval_policy,
                 eval_envs,
                 eval_eps,
@@ -340,7 +340,7 @@ def main(config):
             )
             if config.video_pred_log:
                 video_pred = agent._wm.video_pred(next(eval_dataset))
-                logger.video("eval_openl", to_np(video_pred))
+                logger.video("eval_openl", to_np(video_pred))"""
         print("Start training.")
         state = tools.simulate(
             agent,
