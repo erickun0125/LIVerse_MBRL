@@ -34,7 +34,7 @@ class LIV(nn.Module):
         self.grad_text = grad_text
 
         # Load CLIP model and transform
-        model, cliptransforms = clip.load(modelid, device=self.device, scratch=scratch, jit=False)
+        model, cliptransforms = clip.load(modelid, device=self.device, jit=False)
         
         # CLIP precision
         if device == "cpu":

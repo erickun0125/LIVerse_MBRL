@@ -10,7 +10,7 @@ os.environ["MUJOCO_GL"] = "egl"
 from liv import load_liv
 import numpy as np
 import ruamel.yaml as yaml
-sys.path.append('/home/snowhan1021/dreamerv3-torch-main/liv/models/')
+sys.path.append('/home/kyungseo/project_eric/VLMPROJECT/dreamerv3-torch-main/liv/models/')
 import clip
 sys.path.append(str(pathlib.Path(__file__).parent))
 
