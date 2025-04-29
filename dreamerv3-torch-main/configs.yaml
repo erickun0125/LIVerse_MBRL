@@ -117,9 +117,9 @@ metaworld:
   action_repeat: 1
   envs: 1
   train_ratio: 512
-  video_pred_log: false
-  encoder: {mlp_keys: '$^', cnn_keys: 'image' , minres: 15}
-  decoder: {mlp_keys: '$^', cnn_keys: 'image', minres: 15}
+  video_pred_log: true
+  encoder: {mlp_keys: '$^', cnn_keys: 'image' , minres: 7}
+  decoder: {mlp_keys: '$^', cnn_keys: 'image', minres: 7}
   imag_gradient: 'reinforce'
   reward_head:
     {layers: 2, dist: 'none', loss_scale: 1.0, outscale: 1.0}

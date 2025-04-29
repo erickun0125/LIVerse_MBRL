@@ -76,6 +76,14 @@ class MetaWorldEnvWrapper(gym.Env):
             task = random.choice(ml1.test_tasks)
             self.env.set_task(task)
 
+
+        # 렌더링 해상도를 직접 설정 -> LIV가 224
+        self.env.width = 224
+        self.env.height = 224
+        # MuJoCo 모델 VIS 속성도 설정
+        self.env.model.vis.global_.offwidth = 224
+        self.env.model.vis.global_.offheight = 224
+
         if seed is not None:
             self.env.seed(seed)
         """
@@ -149,7 +157,9 @@ class MetaWorldEnvWrapper(gym.Env):
         return result
 
     def render(self, mode="rgb_array"):
-        return self.env.render()
+        orig_img = self.env.render()
+        import cv2
+        return cv2.resize(orig_img, (224, 224))
 
     def close(self):
         self.env.close()

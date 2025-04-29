@@ -73,6 +73,7 @@ class Dreamer(nn.Module):
                 self._train(next(self._dataset))
                 self._update_count += 1
                 self._metrics["update_count"] = self._update_count
+                #print(f"Update count: {self._update_count}, step: {step}, update step: {self._step}")
             if self._should_log(step):
                 for name, values in self._metrics.items():
                     self._logger.scalar(name, float(np.mean(values)))
@@ -238,7 +239,8 @@ def main(config):
     liv = load_liv()
     liv.eval()
     transform = T.Compose([T.ToTensor()])
-    text = clip.tokenize(["Agent reaches for a certain spot."]).to('cuda:0')
+    #text = clip.tokenize(["Agent reaches for a certain spot."]).to('cuda:0')
+    text = clip.tokenize(["Robot arm presses a button."]).to('cuda:0')
     with torch.no_grad():
         target_text_embedding= liv(input=text, modality="text")
 
