@@ -33,7 +33,7 @@ class SawyerButtonPressEnvV2(SawyerXYZEnv):
         )
 
         self.init_config: InitConfigDict = {
-            "obj_init_pos": np.array([0.9, 0.9, 0.115], dtype=np.float32),
+            "obj_init_pos": np.array([0, 0.9, 0.115], dtype=np.float32),
             "hand_init_pos": np.array([0, 0.4, 0.2], dtype=np.float32),
         }
         self.goal = np.array([0, 0.78, 0.12])
