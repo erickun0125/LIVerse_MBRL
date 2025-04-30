@@ -6,7 +6,7 @@ import random
 import torch
 import torchvision.transforms as T
 from PIL import Image
-
+import cv2
 def convert_to_gym_space(space):
     """
     Converts a gymnasium space to a gym space.
@@ -76,14 +76,14 @@ class MetaWorldEnvWrapper(gym.Env):
             task = random.choice(ml1.test_tasks)
             self.env.set_task(task)
 
-
+        '''
         # 렌더링 해상도를 직접 설정 -> LIV가 224
         self.env.width = 224
         self.env.height = 224
         # MuJoCo 모델 VIS 속성도 설정
         self.env.model.vis.global_.offwidth = 224
         self.env.model.vis.global_.offheight = 224
-
+        '''
         if seed is not None:
             self.env.seed(seed)
         """
@@ -108,10 +108,13 @@ class MetaWorldEnvWrapper(gym.Env):
         
         """
         # Get a sample rendered image from the environment.
-        sample_image = self.env.render()
+        # 샘플 이미지 가져오기 및 리사이즈
+        raw_sample_image = self.env.render()
+        #import cv2
+        #sample_image = cv2.resize(raw_sample_image, (224, 224))
         # Define the image space based on the sample.
         # We assume pixel values are in [0, 255] and of type uint8.
-        image_space = spaces.Box(low=0, high=255, shape=sample_image.shape, dtype=np.uint8)
+        image_space = spaces.Box(low=0, high=255, shape=raw_sample_image.shape, dtype=np.uint8)
 
         self.observation_space = spaces.Dict({
             "image": image_space,
@@ -158,8 +161,8 @@ class MetaWorldEnvWrapper(gym.Env):
 
     def render(self, mode="rgb_array"):
         orig_img = self.env.render()
-        import cv2
-        return cv2.resize(orig_img, (224, 224))
-
+        #return cv2.resize(orig_img, (224, 224))
+        return orig_img
+    
     def close(self):
         self.env.close()
