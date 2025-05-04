@@ -6,7 +6,7 @@ import random
 import torch
 import torchvision.transforms as T
 from PIL import Image
-import cv2
+
 def convert_to_gym_space(space):
     """
     Converts a gymnasium space to a gym space.
@@ -34,34 +34,37 @@ def convert_to_gym_space(space):
 
 class MetaWorldEnvWrapper(gym.Env):
     """
-    A Gym-style wrapper for a MetaWorld task (using the MT1 benchmark).
+    A Gym-style wrapper for a MetaWorld task (using the ML1 benchmark).
     This wrapper makes the environment compatible with DreamerV3 by
     returning observations as a dictionary with keys:
-      - "image": the raw state observation (note: not an actual image)
-      - "discount": a discount factor (1.0 if not terminal, 0.0 if done)
-      - "is_first": a flag that is 1 at the beginning of an episode and 0 thereafter
-      - "is_terminal": a flag that is 1 if the current state is terminal, else 0
+      - "image": 렌더링된 이미지 데이터
+      - "raw_obs": 환경에서 반환된 원시 상태 데이터
+      - "discount": 할인 인자 (1.0 if not terminal, 0.0 if done)
+      - "is_first": 에피소드 시작 여부 플래그 (1 at the beginning, 0 thereafter)
+      - "is_terminal": 종료 상태 여부 플래그 (1 if terminal, 0 otherwise)
+      - "target_image_embedding": LIV 모델로 생성한 이미지 임베딩
 
     Usage:
-      env = MetaWorldEnvWrapper(task_name='reach-v1', task_index=0, seed=42)
+      env = MetaWorldEnvWrapper(task_name='reach-v1', liv=liv_model, seed=42)
       obs = env.reset()
       next_obs, reward, done, info = env.step(action)
     """
-    def __init__(self, task_name, liv,seed=None,mode="train"):
+    def __init__(self, task_name, liv, seed=None, mode="train"):
         super(MetaWorldEnvWrapper, self).__init__()
         self.task_name = task_name
-        self.liv =liv
+        self.liv = liv
         self.liv.eval()
         self.transform = T.Compose([T.ToTensor()])
         if seed is not None:
             random.seed(seed)
-        # Create the MT1 benchmark instance (a single-task benchmark)
+            
+        # Create the ML1 benchmark instance (a single-task benchmark)
         ml1 = metaworld.ML1(task_name)
         
         if task_name not in ml1.train_classes:
             raise ValueError(f"Task '{task_name}' not found in ML1 benchmark.")
+            
         # Instantiate the environment for the given task.
-         
         if "train" in mode:
             self.env = ml1.train_classes[task_name](camera_id=1)
             task = random.choice(ml1.train_tasks)
@@ -71,97 +74,84 @@ class MetaWorldEnvWrapper(gym.Env):
             task = random.choice(ml1.test_tasks)
             self.env.set_task(task)
         elif "eval" in mode:
-            #temporary for now
+            # temporary for now
             self.env = ml1.train_classes[task_name](camera_id=1)
             task = random.choice(ml1.test_tasks)
             self.env.set_task(task)
 
-        '''
-        # 렌더링 해상도를 직접 설정 -> LIV가 224
-        self.env.width = 224
-        self.env.height = 224
-        # MuJoCo 모델 VIS 속성도 설정
-        self.env.model.vis.global_.offwidth = 224
-        self.env.model.vis.global_.offheight = 224
-        '''
         if seed is not None:
             self.env.seed(seed)
-        """
-        # Wrap the underlying observation space into a Dict space with the required keys.
-        # Here we assume the underlying env uses a Box for state observations.
-        obs_space = getattr(self.env, 'observation_space', None)
-        #print(obs_space)
-        if obs_space is None:
-            # If not available, sample one observation to infer the shape.
-            sample_obs = self.env.reset()
-            obs_shape = np.array(sample_obs).shape
-            obs_space = spaces.Box(low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32)
-        else:
-            # Convert gymnasium space to gym space if necessary.
-            obs_space = convert_to_gym_space(obs_space)
+            
+        # Get a sample rendered image and raw observation
+        sample_raw_obs, _ = self.env.reset()
+        sample_image = self.env.render()
+        
+        # Define observation spaces
+        obs_shape = np.array(sample_raw_obs).shape
+        #print("wow : ", obs_shape)
+        raw_obs_space = spaces.Box(low=-np.inf, high=np.inf, shape=obs_shape, dtype=np.float32)
+        image_space = spaces.Box(low=0, high=255, shape=sample_image.shape, dtype=np.uint8)
+
         self.observation_space = spaces.Dict({
-            "image": obs_space,
+            "image": image_space,
+            "raw_obs": raw_obs_space,
             "discount": spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
             "is_first": spaces.Box(low=0, high=1, shape=(1,), dtype=np.int8),
             "is_terminal": spaces.Box(low=0, high=1, shape=(1,), dtype=np.int8),
         })
         
-        """
-        # Get a sample rendered image from the environment.
-        # 샘플 이미지 가져오기 및 리사이즈
-        raw_sample_image = self.env.render()
-        #import cv2
-        #sample_image = cv2.resize(raw_sample_image, (224, 224))
-        # Define the image space based on the sample.
-        # We assume pixel values are in [0, 255] and of type uint8.
-        image_space = spaces.Box(low=0, high=255, shape=raw_sample_image.shape, dtype=np.uint8)
-
-        self.observation_space = spaces.Dict({
-            "image": image_space,
-            "discount": spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
-            "is_first": spaces.Box(low=0, high=1, shape=(1,), dtype=np.int8),
-            "is_terminal": spaces.Box(low=0, high=1, shape=(1,), dtype=np.int8),
-        })
         self.action_space = self.env.action_space
         # Internal flag to mark the first timestep of an episode.
         self.first = True
 
     def reset(self):
-        
-        self.env.reset()
-        raw_obs = self.render()
+        raw_obs, _ = self.env.reset()
+        img_obs = self.render()
+        #print("raw_obs : ", raw_obs)
         self.first = True
-        return self._process_obs(raw_obs, is_done=False)
+        return self._process_obs(raw_obs, img_obs, is_done=False)
 
     def step(self, action):
-        raw_obs, reward,_, done, info = self.env.step(action)
-        raw_obs = self.render()
-        #reward dummy value of 0
-        return self._process_obs(raw_obs, is_done=done), 0, done, info
+        raw_obs, reward, _, done, info = self.env.step(action)
+        img_obs = self.render()
+        # reward is dummy value of 0 as it will be computed by LIV
+        return self._process_obs(raw_obs, img_obs, is_done=done), 0, done, info
 
-    def _process_obs(self, obs, is_done):
+    def _process_obs(self, raw_obs, img_obs, is_done):
         """
-        Converts the raw observation into a dictionary with the keys expected by DreamerV3.
+        Converts the observations into a dictionary with the keys expected by DreamerV3.
+        
+        Args:
+            raw_obs: 환경의 step()에서 반환한 원시 상태 데이터
+            img_obs: 환경의 render()에서 반환한 이미지 데이터
+            is_done: 에피소드 종료 여부
+            
+        Returns:
+            observation 딕셔너리
         """
-        pil_image = self.transform(Image.fromarray(obs)).unsqueeze(0).to("cuda:0")
+        pil_image = self.transform(Image.fromarray(img_obs)).unsqueeze(0).to("cuda:0")
         with torch.no_grad():
-            target_image_embedding= self.liv(input=pil_image, modality="vision")
+            target_image_embedding = self.liv(input=pil_image, modality="vision")
+            
         result = {
-            # We call the key "image" even though this is a state vector.
-            "image": np.array(obs),
-            # Provide a discount factor: 1.0 if not done, 0.0 if terminal.
+            # 시각적 관측값 (render()의 결과)
+            "image": np.array(img_obs),
+            # 원시 상태 데이터 (step()의 반환값)
+            "raw_obs": np.array(raw_obs, dtype=np.float32),
+            # 할인 인자: 1.0 (not done), 0.0 (terminal)
             "discount": np.array([0.0 if is_done else 1.0], dtype=np.float32),
-            # 'is_first' is 1 only on the first step after a reset.
+            # 'is_first'는 에피소드 첫 스텝에서만 1
             "is_first": np.array([1] if self.first else [0], dtype=np.int8),
-            # 'is_terminal' indicates whether the current step ended the episode.
+            # 'is_terminal'은 현재 스텝이 종료 상태일 때 1
             "is_terminal": np.array([1] if is_done else [0], dtype=np.int8),
-        "target_image_embedding":target_image_embedding.cpu().numpy(),}
+            # LIV 모델로 생성한 이미지 임베딩
+            "target_image_embedding": target_image_embedding.cpu().numpy(),
+        }
         self.first = False
         return result
 
     def render(self, mode="rgb_array"):
         orig_img = self.env.render()
-        #return cv2.resize(orig_img, (224, 224))
         if hasattr(self.env, 'camera_id') and self.env.camera_id not in [None, 0]:
             # 이미지 상하 반전
             orig_img = np.flipud(orig_img)

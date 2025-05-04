@@ -9,7 +9,7 @@ defaults:
   deterministic_run: False
   steps: 1e6
   parallel: False
-  eval_every: 500 #1e4 
+  eval_every: 1e4 
   eval_episode_num: 10
   log_every: 1e4
   reset_every: 0
@@ -118,8 +118,8 @@ metaworld:
   envs: 1
   train_ratio: 512
   video_pred_log: true
-  encoder: {mlp_keys: '$^', cnn_keys: 'image' , minres: 7}
-  decoder: {mlp_keys: '$^', cnn_keys: 'image', minres: 7}
+  encoder: {mlp_keys: 'raw_obs', cnn_keys: 'image' , minres: 7}
+  decoder: {mlp_keys: 'raw_obs', cnn_keys: 'image', minres: 7}
   imag_gradient: 'reinforce'
   reward_head:
     {layers: 2, dist: 'none', loss_scale: 1.0, outscale: 1.0}

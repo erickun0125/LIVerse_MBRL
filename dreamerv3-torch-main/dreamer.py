@@ -240,7 +240,7 @@ def main(config):
     liv.eval()
     transform = T.Compose([T.ToTensor()])
     #text = clip.tokenize(["Agent reaches for a certain spot."]).to('cuda:0')
-    text = clip.tokenize(["Robot arm presses a button."]).to('cuda:0')
+    text = clip.tokenize(["Agent presses button"]).to('cuda:0')
     with torch.no_grad():
         target_text_embedding= liv(input=text, modality="text")
 
