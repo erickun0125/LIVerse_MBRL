@@ -63,16 +63,16 @@ class MetaWorldEnvWrapper(gym.Env):
         # Instantiate the environment for the given task.
          
         if "train" in mode:
-            self.env = ml1.train_classes[task_name]()
+            self.env = ml1.train_classes[task_name](camera_id=1)
             task = random.choice(ml1.train_tasks)
             self.env.set_task(task)
         elif "test" in mode:
-            self.env = ml1.test_classes[task_name]()
+            self.env = ml1.train_classes[task_name](camera_id=1)
             task = random.choice(ml1.test_tasks)
             self.env.set_task(task)
         elif "eval" in mode:
             #temporary for now
-            self.env = ml1.test_classes[task_name]()
+            self.env = ml1.train_classes[task_name](camera_id=1)
             task = random.choice(ml1.test_tasks)
             self.env.set_task(task)
 
@@ -162,6 +162,9 @@ class MetaWorldEnvWrapper(gym.Env):
     def render(self, mode="rgb_array"):
         orig_img = self.env.render()
         #return cv2.resize(orig_img, (224, 224))
+        if hasattr(self.env, 'camera_id') and self.env.camera_id not in [None, 0]:
+            # 이미지 상하 반전
+            orig_img = np.flipud(orig_img)
         return orig_img
     
     def close(self):
