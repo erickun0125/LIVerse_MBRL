@@ -293,7 +293,103 @@ class RSSM(nn.Module):
         loss = dyn_scale * dyn_loss + rep_scale * rep_loss
 
         return loss, value, dyn_loss, rep_loss
+        
+    def forward(self, prev_state, prev_action, prev_belief, embed, is_first=None):
+        """상태 전이와 믿음 업데이트를 수행하는 forward 함수
+        
+        Args:
+            prev_state: 이전 상태 (딕셔너리)
+            prev_action: 이전 액션 [T, B, A]
+            prev_belief: 이전 믿음 상태 [B, H]
+            embed: 현재 관측 임베딩 [T, B, E] 또는 None
+            is_first: 시퀀스 시작 플래그 [T, B]
+            
+        Returns:
+            Tuple: (beliefs, prior_states, prior_means, prior_std_devs, 
+                    posterior_states, posterior_means, posterior_std_devs)
+        """
+        # 시간, 배치 차원 설정
+        T = 1  # 단일 단계 처리
+        B = prev_action.shape[1] if prev_action.dim() > 1 else 1
+        
+        # 상태가 None이면 초기화
+        if prev_state is None:
+            prev_state = self.initial(B)
+        
+        # 관측값이 없을 경우 (imagination)
+        if embed is None:
+            # 사전 예측만 수행
+            prior = self.img_step(prev_state, prev_action[0], sample=True)
+            
+            # 결과 구성
+            beliefs = self._img_out_layers(prior["deter"]).unsqueeze(0)
+            prior_states = {k: v.unsqueeze(0) for k, v in prior.items()}
+            
+            if self._discrete:
+                prior_means = torch.zeros_like(prior["stoch"]).unsqueeze(0)
+                prior_std_devs = torch.zeros_like(prior["stoch"]).unsqueeze(0)
+            else:
+                prior_means = prior["mean"].unsqueeze(0)
+                prior_std_devs = prior["std"].unsqueeze(0)
+            
+            # posterior는 사용할 수 없음
+            posterior_states = prior_states
+            posterior_means = prior_means
+            posterior_std_devs = prior_std_devs
+        else:
+            # 관측값이 있는 경우 (update)
+            # 먼저 is_first 처리
+            if is_first is not None and torch.any(is_first):
+                # 초기 상태 재설정
+                init_state = self.initial(B)
+                if is_first.dim() == 1:
+                    is_first = is_first.unsqueeze(1)
+                
+                # 시작 플래그가 True인 위치만 초기화
+                for k, v in prev_state.items():
+                    mask = is_first
+                    for _ in range(len(v.shape) - len(mask.shape)):
+                        mask = mask.unsqueeze(-1)
+                    prev_state[k] = v * (1.0 - mask) + init_state[k] * mask
+            
+            # 사전 상태 계산
+            prior = self.img_step(prev_state, prev_action[0])
 
+            # 사후 상태 계산
+            x = torch.cat([prior["deter"], embed], -1)
+            x = self._obs_out_layers(x)
+            stats = self._suff_stats_layer("obs", x)
+            stoch = self.get_dist(stats).sample()
+            posterior = {"stoch": stoch, "deter": prior["deter"], **stats}
+            
+            # 믿음 상태 업데이트
+            belief = prev_belief
+            if self._discrete:
+                stoch_flat = posterior["stoch"].reshape(B, -1)
+            else:
+                stoch_flat = posterior["stoch"]
+            
+            x = torch.cat([stoch_flat, prev_action[0]], -1)
+            x = self._img_in_layers(x)
+            belief, _ = self._cell(x, [belief])
+            
+            # 결과 구성
+            beliefs = belief.unsqueeze(0)
+            prior_states = {k: v.unsqueeze(0) for k, v in prior.items()}
+            posterior_states = {k: v.unsqueeze(0) for k, v in posterior.items()}
+            
+            if self._discrete:
+                prior_means = torch.zeros_like(prior["stoch"]).unsqueeze(0)
+                prior_std_devs = torch.zeros_like(prior["stoch"]).unsqueeze(0)
+                posterior_means = torch.zeros_like(posterior["stoch"]).unsqueeze(0)
+                posterior_std_devs = torch.zeros_like(posterior["stoch"]).unsqueeze(0)
+            else:
+                prior_means = prior["mean"].unsqueeze(0)
+                prior_std_devs = prior["std"].unsqueeze(0)
+                posterior_means = posterior["mean"].unsqueeze(0)
+                posterior_std_devs = posterior["std"].unsqueeze(0)
+        
+        return beliefs, prior_states, prior_means, prior_std_devs, posterior_states, posterior_means, posterior_std_devs
 
 class MultiEncoder(nn.Module):
     def __init__(

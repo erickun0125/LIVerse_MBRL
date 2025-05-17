@@ -24,7 +24,7 @@ defaults:
   size: [64, 64]
   envs: 1
   #action_repeat: 2
-  time_limit: 1000
+  time_limit: 200
   grayscale: False
   prefill: 2500
   reward_EMA: True
@@ -92,6 +92,19 @@ defaults:
     {mlp_keys: '$^', cnn_keys: 'image', act: 'SiLU', norm: True, cnn_depth: 32, kernel_size: 4, minres: 7, mlp_layers: 5, mlp_units: 1024, symlog_inputs: True}
   decoder:
     {mlp_keys: '$^', cnn_keys: 'image', act: 'SiLU', norm: True, cnn_depth: 32, kernel_size: 4, minres: 7, mlp_layers: 5, mlp_units: 1024, cnn_sigmoid: False, image_dist: mse, vector_dist: symlog_mse, outscale: 1.0}
+  imag_gradient: 'reinforce'
+  reward_head:
+    {layers: 2, dist: 'none', loss_scale: 1.0, outscale: 1.0}
+
+metaworld:
+  batch_size: 4
+  steps: 1e6
+  action_repeat: 1
+  envs: 1
+  train_ratio: 512
+  video_pred_log: true
+  encoder: {mlp_keys: 'raw_obs', cnn_keys: 'image' , minres: 7}
+  decoder: {mlp_keys: 'raw_obs', cnn_keys: 'image', minres: 7}
   imag_gradient: 'reinforce'
   reward_head:
     {layers: 2, dist: 'none', loss_scale: 1.0, outscale: 1.0}

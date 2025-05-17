@@ -4,6 +4,13 @@ logdir*
 vis_*
 result*
 
+#
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.gif
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
