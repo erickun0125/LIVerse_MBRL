@@ -559,15 +559,15 @@ if __name__ == "__main__":
     # Add PlaNet-specific arguments
     planet_specific = {
         "results_dir": "",  # 자동 넘버링 처리됨
-        "planning_horizon": 10,
+        "planning_horizon": 12,
         "optimization_iters": 10,
         "candidates": 1000,
-        "top_candidates": 100,
+        "top_candidates": 50,
         "eval_episodes": 1,
         "text_prompt": "Robot arm presses a button.",
         "render": True, 
         "save_video": True,
-        "max_episode_length": 200,
+        "max_episode_length": 100,
         "disable_cuda": False,
         "goal_image": "",  # 새로 추가: 목표 이미지 파일 이름 (확장자 제외)
         "checkpoint_file": "latest_button.pt",  # 새로 추가: 체크포인트 파일 이름

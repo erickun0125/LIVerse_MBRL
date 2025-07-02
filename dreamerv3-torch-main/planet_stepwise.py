@@ -642,14 +642,14 @@ if __name__ == "__main__":
         "text_prompt": "Robot arm presses a button.",
         "render": True, 
         "save_video": True,
-        "max_episode_length": 400,
+        "max_episode_length": 200,
         "disable_cuda": False,
         "reward_form": "similarity",  # 보상 형태: similarity 또는 difference
         
         # Step-wise 관련 설정 추가
         "step_wise": False,  # 서브태스크 모드 활성화 여부
         "subtask_dir": "./subtasks",  # 서브태스크 이미지 디렉토리
-        "similarity_threshold": 0.0003,  # 다음 서브태스크로 넘어가는 유사도 임계값
+        "similarity_threshold": 0.0012,  # 다음 서브태스크로 넘어가는 유사도 임계값
         "plateau_patience": 5  # 다음 서브태스크로 넘어가기 전 기다리는 스텝 수
     }
     
