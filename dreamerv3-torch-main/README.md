@@ -12,6 +12,10 @@ A PyTorch implementation of **LIVerse**, a novel world foundation model (WFM) th
 - **Step-wise Planning**: Effective sub-task decomposition with adaptive goal switching
 - **Reduced Hand-crafted Dependencies**: Minimizing reliance on manually designed reward functions
 
+## Research Poster
+
+![LIVerse Research Poster](./imgs/LIVerse_MBRL_Poster.png)
+
 ## Architecture
 
 ### 1. LIVerse World Foundation Model (`dreamer.py`)
@@ -124,16 +128,15 @@ python planet_stepwise.py --configs metaworld --task ML1_button-press-v2 \
 ## Experimental Results
 
 ### Benchmark Environment
-| Environment | Task Type | Observation | Action Space | Evaluation Focus |
-|-------------|-----------|-------------|--------------|------------------|
-| Meta-World | Robotic Manipulation | RGB Images | Continuous | Zero-shot policy execution, Transfer learning, Sub-task decomposition |
+| Environment | Task Type | Evaluation Focus |
+|-------------|-----------|------------------|
+| Meta-World | Robotic Manipulation | Zero-shot policy execution, Transfer learning, Sub-task decomposition |
 
 ### Key Findings
 - **Strong Zero-Shot Policy Execution**: LIVerse-based MPC agent demonstrates effective zero-shot performance
-- **Transfer Learning Across Diverse Tasks**: Successful generalization across various manipulation tasks  
+- **Transfer Learning Across Diverse Tasks**: Successful generalization across various manipulation tasks and environments  
 - **Effective Sub-task Decomposition**: Step-wise planning with delta-score rewards handles complex multi-stage tasks
-- **Reduced Hand-crafted Dependencies**: Significant reduction in manual reward engineering requirements
-- **Paradigm Shift**: New approach for Robot Foundation Models integrating model-based RL with LIVerse
+
 
 ## File Structure
 ```

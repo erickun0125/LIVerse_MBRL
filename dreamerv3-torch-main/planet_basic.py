@@ -79,7 +79,7 @@ class MPCPlanner:
             curr_belief = belief_expanded.clone()
             curr_state = {k: v.clone() for k, v in state_expanded.items()}
             
-            # 초기 유사도 계산
+            # Calculate initial similarity
             feat = self.transition_model.get_feat(curr_state)
             prev_similarities = self.reward_function(feat, curr_state, actions[0], target_embedding)
             
@@ -100,13 +100,13 @@ class MPCPlanner:
                 feat = self.transition_model.get_feat(curr_state)
                 current_similarities = self.reward_function(feat, curr_state, action, target_embedding)
                 
-                # 보상 계산 (차이 기반 또는 유사도 자체)
+                # Calculate reward (difference-based or similarity itself)
                 if self.reward_form == "difference":
                     reward = current_similarities - prev_similarities
                 else:  # similarity
                     reward = current_similarities
                 
-                # 현재 유사도를 다음 단계의 이전 유사도로 저장
+                # Store current similarity as previous similarity for next step
                 prev_similarities = current_similarities.clone()
                 
                 # Accumulate returns
@@ -169,20 +169,20 @@ def make_env(config, mode, id, liv=None):
 
 def update_belief_and_act(world_model, planner, belief, posterior_state, action, observation, is_first, target_embedding):
     """Update belief and state with new observation, then plan action."""
-    # 관측값 전처리 (중요!)
+    # Preprocess observation (important!)
     obs_processed = world_model.preprocess(observation)
     
-    # 전처리된 관측값으로 임베딩 생성
+    # Generate embedding from preprocessed observation
     embed = world_model.encoder(obs_processed).unsqueeze(dim=0)
     
-    # 상태 업데이트
+    # Update state
     belief, _, _, _, posterior_state, _, _ = world_model.dynamics(
         posterior_state, action.unsqueeze(dim=0), belief, embed, is_first)
     
-    # 시간 차원 제거
+    # Remove time dimension
     belief, posterior_state = belief.squeeze(dim=0), {k: v.squeeze(dim=0) for k, v in posterior_state.items()}
     
-    # 액션 계획
+    # Plan action
     action = planner.plan(belief, posterior_state, target_embedding)
     
     return belief, posterior_state, action
@@ -217,20 +217,20 @@ def plot_similarity(timesteps, similarities, diff_rewards, filename=None):
     """Plot similarity scores and difference rewards over time and save to file."""
     fig, ax1 = plt.subplots(figsize=(10, 6))
     
-    # 유사도 그래프 (왼쪽 y축)
+    # Similarity graph (left y-axis)
     ax1.set_xlabel('Timestep')
     ax1.set_ylabel('Similarity Score', color='tab:blue')
     ax1.plot(timesteps, similarities, 'b-', label='Similarity')
     ax1.tick_params(axis='y', labelcolor='tab:blue')
     
-    # 차이 기반 보상 그래프 (오른쪽 y축)
+    # Difference-based reward graph (right y-axis)
     ax2 = ax1.twinx()
     ax2.set_ylabel('Difference Reward', color='tab:red')
-    # 차이 기반 보상은 첫 번째 타임스텝을 제외하고 시각화 (첫 타임스텝에는 이전 값이 없음)
+    # Visualize difference-based rewards excluding the first timestep (no previous value for first timestep)
     ax2.plot(timesteps[1:], diff_rewards[1:], 'r-', label='Difference')
     ax2.tick_params(axis='y', labelcolor='tab:red')
     
-    # 제목과 범례
+    # Title and legend
     plt.title('Similarity Score and Difference Reward over Time')
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
@@ -245,36 +245,36 @@ def plot_similarity(timesteps, similarities, diff_rewards, filename=None):
 
 
 def get_next_available_dir(base_dir):
-    """디렉토리가 이미 존재하는 경우 자동으로 넘버링된 새 디렉토리 경로 반환"""
-    # 기본 경로 분석
+    """Return automatically numbered new directory path if directory already exists"""
+    # Analyze base path
     base_path = pathlib.Path(base_dir)
     parent_dir = base_path.parent
     base_name = base_path.name
     
-    # 숫자 추출 (예: "planet_results1"에서 "planet_results"와 "1" 분리)
+    # Extract number (e.g., separate "planet_results" and "1" from "planet_results1")
     import re
     match = re.match(r"(.*?)(\d*)$", base_name)
     
     if match:
         prefix = match.group(1)
-        # 숫자가 있으면 해당 숫자부터, 없으면 1부터 시작
+        # Start from the number if it exists, otherwise start from 1
         start_num = int(match.group(2)) if match.group(2) else 1
     else:
-        # 숫자 패턴이 없으면 전체 이름을 prefix로 사용하고 1부터 시작
+        # If no number pattern, use entire name as prefix and start from 1
         prefix = base_name
         start_num = 1
     
-    # 기존 디렉토리 확인 및 다음 사용 가능한 숫자 찾기
+    # Check existing directories and find next available number
     current_num = start_num
     while True:
-        # 현재 번호로 폴더 경로 생성
+        # Create folder path with current number
         current_dir = parent_dir / f"{prefix}{current_num}"
         
-        # 해당 폴더가 존재하지 않으면 이 경로 반환
+        # Return this path if the folder doesn't exist
         if not current_dir.exists():
             return str(current_dir)
         
-        # 존재하면 번호 증가
+        # Increment number if it exists
         current_num += 1
 
 def main(config):
@@ -297,18 +297,18 @@ def main(config):
     # Set up directories
     logdir = pathlib.Path(config.logdir).expanduser()
 
-    # results_dir 자동 넘버링
+    # Auto-numbering for results_dir
     if hasattr(config, 'results_dir') and config.results_dir:
-        # 사용자가 직접 지정한 경우 그대로 사용
+        # Use as specified if user directly specified
         results_dir = pathlib.Path(config.results_dir).expanduser()
         print(f"Using user specified results directory: {results_dir}")
     else:
-        # 기본 디렉토리에 자동 넘버링 적용
+        # Apply auto-numbering to default directory
         base_results_dir = "./planet_results/planet_results1"
         results_dir = pathlib.Path(get_next_available_dir(base_results_dir))
         print(f"Using auto-numbered results directory: {results_dir}")
 
-    # 결과 디렉토리 생성
+    # Create results directory
     results_dir.mkdir(parents=True, exist_ok=True)
     print(f"Results will be saved to: {results_dir}")
     
@@ -316,7 +316,7 @@ def main(config):
     liv = load_liv()
     liv.eval()
     
-    # goal_image 처리
+    # Process goal_image
     goal_image_base_path = "logdir/planet_test"
     if hasattr(config, 'goal_image') and config.goal_image:
         goal_image_filename = f"{config.goal_image}.png"
@@ -326,25 +326,25 @@ def main(config):
     goal_image_path = os.path.join(goal_image_base_path, goal_image_filename)
     
     if os.path.exists(goal_image_path):
-        print(f"목표 이미지로 '{goal_image_path}'를 사용합니다.")
-        # 이미지 로드 및 변환
+        print(f"Using '{goal_image_path}' as goal image.")
+        # Load and transform image
         transform = T.Compose([T.ToTensor()])
         goal_pil_image = Image.open(goal_image_path).convert('RGB')
         goal_tensor = transform(goal_pil_image).unsqueeze(0).to('cuda:0')
         
-        # 이미지 임베딩 생성
+        # Generate image embedding
         with torch.no_grad():
             target_text_embedding = liv(input=goal_tensor, modality="vision")
-        print("이미지 기반 목표 임베딩을 생성했습니다.")
+        print("Generated image-based goal embedding.")
     else:
-        print(f"경고: 이미지 '{goal_image_path}'를 찾을 수 없습니다. 텍스트 기반 임베딩을 사용합니다.")
-        # 기존 텍스트 임베딩 사용
+        print(f"Warning: Image '{goal_image_path}' not found. Using text-based embedding.")
+        # Use existing text embedding
         text = clip.tokenize([config.text_prompt]).to('cuda:0')
         with torch.no_grad():
             target_text_embedding = liv(input=text, modality="text")
-        print(f"텍스트 기반 목표 임베딩을 생성했습니다 ('{config.text_prompt}').")
+        print(f"Generated text-based goal embedding ('{config.text_prompt}').")
     
-    print(f"보상 형태: {config.reward_form}")
+    print(f"Reward form: {config.reward_form}")
     
     print("Creating environment...")
     env = make_env(config, "eval", 0, liv)
@@ -445,7 +445,7 @@ def main(config):
         total_reward = 0
         video_frames = []
         
-        # 타임스텝별 유사도와 차이 기반 보상 기록
+        # Record similarity and difference-based rewards by timestep
         timesteps = []
         similarities = []
         diff_rewards = []
@@ -472,17 +472,17 @@ def main(config):
                     target_text_embedding
                 )
                 
-                # 현재 유사도 계산
+                # Calculate current similarity
                 feat = world_model.dynamics.get_feat(posterior_state)
                 current_similarity = F.cosine_similarity(
                     world_model.heads["reward"](feat), target_text_embedding, dim=-1
                 ).item()
                 
-                # 차이 기반 보상 계산
+                # Calculate difference-based reward
                 diff_reward = current_similarity - prev_similarity
                 prev_similarity = current_similarity
                 
-                # 데이터 기록
+                # Record data
                 timesteps.append(t)
                 similarities.append(current_similarity)
                 diff_rewards.append(diff_reward)
@@ -506,7 +506,7 @@ def main(config):
         
         print(f"Episode {episode} completed with reward {total_reward:.2f}")
         
-        # 그래프 저장
+        # Save graph
         plot_filename = results_dir / f"similarity_plot_episode_{episode}_{config.reward_form}.png"
         plot_similarity(timesteps, similarities, diff_rewards, plot_filename)
         print(f"Similarity plot saved to {plot_filename}")
@@ -569,10 +569,10 @@ if __name__ == "__main__":
         "save_video": True,
         "max_episode_length": 100,
         "disable_cuda": False,
-        "goal_image": "",  # 새로 추가: 목표 이미지 파일 이름 (확장자 제외)
-        "checkpoint_file": "latest_button.pt",  # 새로 추가: 체크포인트 파일 이름
-        # 새로운 보상 형태 관련 설정
-        "reward_form": "similarity"  # 보상 형태: similarity 또는 difference
+        "goal_image": "",  # Newly added: goal image file name (without extension)
+        "checkpoint_file": "latest_button.pt",  # Newly added: checkpoint file name
+        # New reward form related settings
+        "reward_form": "similarity"  # Reward form: similarity or difference
     }
     
     # Update defaults with PlaNet-specific defaults if not already present
