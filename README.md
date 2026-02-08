@@ -17,6 +17,12 @@
 - **Delta-Score Reward** -- A novel reward function measuring *incremental* similarity improvement (`sim_t - sim_{t-1}`) that resolves reward scale mismatch across subtasks
 - **Step-wise Planning** -- Adaptive multi-subtask decomposition with automatic goal switching via plateau detection
 
+## Poster
+
+<p align="center">
+  <img src="imgs/poster.png" width="90%" alt="LIVerse Research Poster"/>
+</p>
+
 ## Architecture
 
 <p align="center">
@@ -161,12 +167,6 @@ Key planning parameters:
 | `optimization_iters` | 10 | CEM refinement iterations |
 | `reward_form` | `similarity` | `similarity` (absolute) or `difference` (delta-score) |
 | `similarity_threshold` | 0.0012 | Plateau detection threshold (step-wise mode) |
-
-## Poster
-
-<p align="center">
-  <img src="imgs/poster.png" width="90%" alt="LIVerse Research Poster"/>
-</p>
 
 ## Citation
 
