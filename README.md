@@ -162,6 +162,12 @@ Key planning parameters:
 | `reward_form` | `similarity` | `similarity` (absolute) or `difference` (delta-score) |
 | `similarity_threshold` | 0.0012 | Plateau detection threshold (step-wise mode) |
 
+## Poster
+
+<p align="center">
+  <img src="imgs/poster.png" width="90%" alt="LIVerse Research Poster"/>
+</p>
+
 ## Citation
 
 ```bibtex

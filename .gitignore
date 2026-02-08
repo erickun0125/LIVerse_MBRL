@@ -1,14 +1,27 @@
-#
+# Project outputs
 run*
 logdir*
 vis_*
 result*
 
-#
+# Media
 *.mp4
 *.jpg
 *.jpeg
 *.gif
+
+# LaTeX build artifacts
+paper_workspace/*.aux
+paper_workspace/*.bbl
+paper_workspace/*.blg
+paper_workspace/*.fdb_latexmk
+paper_workspace/*.fls
+paper_workspace/*.log
+paper_workspace/*.out
+paper_workspace/*.synctex.gz
+paper_workspace/*.toc
+paper_workspace/*.lof
+paper_workspace/*.lot
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
