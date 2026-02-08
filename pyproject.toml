@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "liverse"
+version = "0.1.0"
+description = "LIVerse: Language & Image integrated uniVerse Model for Robot Foundation Models"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "matplotlib>=3.5.0",
+    "ruamel.yaml>=0.17.4",
+    "gym==0.22.0",
+    "tensorboard>=2.17.1",
+    "Pillow",
+    "torchvision",
+    "imageio",
+    "opencv-python>=4.7.0",
+    "einops>=0.3.0",
+    "protobuf>=3.20.0",
+    "moviepy>=1.0.3",
+]
+
+[project.optional-dependencies]
+dmc = ["dm_control", "mujoco"]
+atari = ["atari-py"]
+crafter = ["crafter>=1.8.0"]
+minecraft = ["minerl"]
+memorymaze = ["memory_maze>=1.0.3"]
+
+[tool.setuptools.packages.find]
+include = ["liverse*"]

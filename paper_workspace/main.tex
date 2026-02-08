@@ -9,6 +9,7 @@
 \usepackage{graphicx}              % For images
 \usepackage{hyperref}              % For hyperlinks
 \usepackage{amsmath}               % For math
+\usepackage{amssymb}               % For math symbols
 \usepackage{booktabs}              % For tables
 \usepackage{xcolor}                % For colors
 \usepackage{float}                 % For figure positioning
@@ -572,7 +573,7 @@ From the graph, we observe an overall decrease of model loss in second training.
 The LIVerse used in this experiment was trained in the button press environment, with the Actor-Critic version agent utilizing an entropy-based intrinsic reward without any VLM-rewards. While the actor-critic training did not utilize the VLM reward, the prediction module of the world model was, of course, trained using the LIV embeddings. Thus, it is a task-agnostic world model that has only experienced the button box environment.
 Using this LIVerse world model within an MPC framework, we evaluated four environments/tasks: button press, drawer close, window close, and lever pull. The zero-shot policy performance results are shown in the following \autoref{fig:Zero-shot policy performance}. While the success rates for window close and lever pull were low, the model achieved a perfect success rate on the button press task and mostly succeeded on drawer close as well. The \autoref{fig:Button press task} shows the similarity score and difference reward over 200 timesteps for a successful trajectory in the button press task.
 
-Additionally, although the robot was unable to fully press and insert the button, we  found that MPC that uses AI-generated image \label{fig:AI} instead of real rendered image was still able to touch the button. As a result, by simply changing the goal image, the agent was able to partially succeed in adapting to new tasks within zero-shot manner. 
+Additionally, although the robot was unable to fully press and insert the button, we  found that MPC that uses AI-generated image instead of real rendered image was still able to touch the button. As a result, by simply changing the goal image, the agent was able to partially succeed in adapting to new tasks within zero-shot manner. 
 \begin{figure}[htbp]
     \centering
     \begin{minipage}[b]{0.48\linewidth}
